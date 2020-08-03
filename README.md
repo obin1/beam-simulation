@@ -3,4 +3,4 @@ Simulating a Bernoulli beam using the finite element method, and some new fun pr
 
 Link to Pluto repository: https://github.com/fonsp/Pluto.jl
 
-This is for a numerical analysis project at TU Berlin with Michael Karow, during summer semester 2020.
+This is a numerical analysis project at TU Berlin with Prof. Michael Karow during summer semester 2020.
