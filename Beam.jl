@@ -30,6 +30,12 @@ end
 # ╔═╡ 6ddca854-d4e3-11ea-0632-7900cf82dec6
 pwd()
 
+# ╔═╡ 5ff1e7b4-d587-11ea-2bad-a3948c7418c3
+@bind N Slider(11:10:101)
+
+# ╔═╡ c429d1aa-d588-11ea-1c32-b133861aced7
+N
+
 # ╔═╡ d39fc69c-d4e5-11ea-17de-bb83220b1625
 @bind L html"<input type=range min = 0.5 max = 11 step = 0.1>"
 
@@ -77,7 +83,7 @@ xh = LinRange(0,L,21)
 phik = basis1D(xh);
 
 # ╔═╡ ec7ee97c-d4e5-11ea-2528-af2a46f9004d
-plot(LinRange(0,L,101),phik[5].(LinRange(0,L,101)), label = 'ϕ')
+scatter(LinRange(0,L,N),phik[5].(LinRange(0,L,N)), label = 'ϕ')
 
 # ╔═╡ 969bf7a4-d4e3-11ea-1a6e-25a799e92a6f
 phidd = map(phik) do f
@@ -85,9 +91,14 @@ phidd = map(phik) do f
    x -> ForwardDiff.derivative(firstderivative, x)
 end
 
+# ╔═╡ 0ae99762-d580-11ea-337b-b1cb1e556277
+Pkg.instantiate()
+
 # ╔═╡ Cell order:
-# ╟─9860665a-d56b-11ea-01c2-e1703fb29f5d
+# ╠═9860665a-d56b-11ea-01c2-e1703fb29f5d
 # ╠═6ddca854-d4e3-11ea-0632-7900cf82dec6
+# ╠═5ff1e7b4-d587-11ea-2bad-a3948c7418c3
+# ╠═c429d1aa-d588-11ea-1c32-b133861aced7
 # ╠═d39fc69c-d4e5-11ea-17de-bb83220b1625
 # ╠═ec7ee97c-d4e5-11ea-2528-af2a46f9004d
 # ╠═92f4bb3e-d4e3-11ea-0424-f59ce379b160
@@ -95,3 +106,4 @@ end
 # ╠═f28245b4-d4e3-11ea-31e4-bdac63887998
 # ╠═969bf7a4-d4e3-11ea-1a6e-25a799e92a6f
 # ╠═c429ada6-d4e3-11ea-25ff-57d5831d9494
+# ╠═0ae99762-d580-11ea-337b-b1cb1e556277
