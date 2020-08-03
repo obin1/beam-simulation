@@ -14,16 +14,17 @@ macro bind(def, element)
 end
 
 # ╔═╡ 9860665a-d56b-11ea-01c2-e1703fb29f5d
-
-
-# ╔═╡ 36414796-d4e4-11ea-0fad-4fe32885d8f3
-
+md"# Beammmmms"
 
 # ╔═╡ c429ada6-d4e3-11ea-25ff-57d5831d9494
 ## Import
 begin
+	import Pkg
+	Pkg.activate(".")
+	
 	using ForwardDiff
 	using Plots
+	using PlutoUI
 end
 
 # ╔═╡ 6ddca854-d4e3-11ea-0632-7900cf82dec6
@@ -79,17 +80,13 @@ phik = basis1D(xh);
 plot(LinRange(0,L,101),phik[5].(LinRange(0,L,101)), label = 'ϕ')
 
 # ╔═╡ 969bf7a4-d4e3-11ea-1a6e-25a799e92a6f
-
-begin
 phidd = map(phik) do f
    firstderivative = x -> ForwardDiff.derivative(f, x)
    x -> ForwardDiff.derivative(firstderivative, x)
 end
-end
-
 
 # ╔═╡ Cell order:
-# ╠═9860665a-d56b-11ea-01c2-e1703fb29f5d
+# ╟─9860665a-d56b-11ea-01c2-e1703fb29f5d
 # ╠═6ddca854-d4e3-11ea-0632-7900cf82dec6
 # ╠═d39fc69c-d4e5-11ea-17de-bb83220b1625
 # ╠═ec7ee97c-d4e5-11ea-2528-af2a46f9004d
@@ -98,4 +95,3 @@ end
 # ╠═f28245b4-d4e3-11ea-31e4-bdac63887998
 # ╠═969bf7a4-d4e3-11ea-1a6e-25a799e92a6f
 # ╠═c429ada6-d4e3-11ea-25ff-57d5831d9494
-# ╠═36414796-d4e4-11ea-0fad-4fe32885d8f3
