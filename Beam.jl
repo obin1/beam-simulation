@@ -17,6 +17,7 @@ end
 begin 
 	using PlutoUI
 	using SparseArrays
+	using LinearAlgebra
 	using Arpack
 	using ForwardDiff
 	using Plots	
@@ -30,8 +31,8 @@ md"# Euler Bernoulli Beams"
 md"""
 **Numerical Analysis Project with Prof. Michael Karow** \
 **TU Berlin** \
-Summer semester 2020 \
-**Group members**: Arvind Nayak, Obin Sturm, Fons van der Plans, Karolina Siemieniuk
+COSSE Summer semester 2020 \
+**Group members**: Arvind Nayak, Fons van der Plans, Karolina Siemieniuk, Obin Sturm
 """
 
 # ╔═╡ 6646b4f0-fdbe-11ea-38a6-9ff1504f8f5d
@@ -48,108 +49,36 @@ document.body.classList.toggle("hide_all_inputs")
 </script>
 """
 
-# ╔═╡ 2ff6cc50-0002-11eb-1d90-e1f3bdada8fc
-md"""
-**Summary**\
-
-Add summary
-"""
-
 # ╔═╡ d8e7f8c0-00d4-11eb-3aad-d5b4512646fa
 md"""
-#### **1. Introduction**
-Structures are all around us. Constantly deflecting and deforming. To measure the performance of a structure deflections and deformations need to be investigated. There are many reason why those performance measures are important. One of them is safety, but the comfort of the users is a vital consideration as well. For example a floor needs to be stiff enough so that it does not deflect too much and users do not feel uncomfortable, even though the deflection might be safe. Another example would be buildings deflecting due to wind or bridges deflecting under the load of the cars going through it. There are various methods to calculate those parameters and this project is going to focus on the Euler Bernoulli beam theory. It is a model that was developed in the 18th century and is a method still used today to analyse the behaviour of bending elements and to determine how beams behave under axial forces and beding.
-
-
-
+### **1. Introduction**
+Structures are all around us. Constantly deflecting and deforming. To measure the performance of a structure deflections and deformations need to be investigated. There are many reason why those performance measures are important. One of them is safety, but the comfort of the users is a vital consideration as well. For example a floor needs to be stiff enough so that it does not deflect too much and users do not feel uncomfortable, even though the deflection might be safe. Another example would be buildings deflecting due to wind or bridges deflecting under the load of the cars going through it. There are various methods to calculate those parameters and this project is going to focus on the Euler Bernoulli beam theory. It is a model that was developed in the 18th century and is a method still used today to analyse the behaviour of bending elements.
 """
 
 # ╔═╡ 3840efd0-fffd-11ea-0445-4184c1500cf5
 md"""
-
-In this project the bending equation for an elastic Bernoulli beam is solved via the Finite Element Method (FEM). The aim of the project is to solve both, static and dynamic cases of the beam problem and generate:\
-- pictures of bended beam in equilibrium (for the static case) and \
-- video showing vibrating beam (for the dynamic case).\
-The FEM was completed using piecewise differentiable functions instead of Sobolev Spaces that are most commonly used when working with FEM.
-The project has been completed using Pluto editor for Julia."""
-
-# ╔═╡ 7171003c-f65f-11ea-0ed1-eb09bbaa9a32
-begin
-	
-	md"""
-	#### 2. Parameters - user's choice
-	
-	**In this section, the properties and loading characterstics of the beam can be selected in order to find the solution of the case that the user is interested in. This will accordingly update the code and the Notebook will calculate and display the solution for the chosen case.**
-	
-	Analysis: $(@bind analysis Select(["static" => "Static" ,"dynamic" => "Dynamic"]))  Type:  $(@bind t Select(["c" => "Cantilever" ,"ss" => "Simply Supported"]))
-	
-	Length of the beam (L): 1 $(@bind L Slider(1:1:10;default=1)) 10
-
-	Number of nodes (N): 2 $(@bind N Slider(2:1:100;default=21)) 100
-	
-	Bending modulus (EI) = $(@bind ei NumberField(1:0.01:10;default=1))
-	
-	μ Mass/length = $(@bind μ NumberField(1:0.01:5;default=1))"""
-	
-end
-
-# ╔═╡ 65d5625e-f58b-11ea-1cb7-fb37ec26e2c3
-begin
-	if t=="c"
-		md"""**Boundary Conditions for a cantilever beam**
-	
-			a = $(@bind a NumberField(0:2;default=0)) 
-	
-			b = $(@bind b NumberField(-1:1;default=0))  
-	
-			End Load (QL) = $(@bind Q NumberField(-10:0.01:10;default=1)) 
-	
-			End Moment (ML) = $(@bind ML NumberField(-1:0.01:1;default=0))"""
-	elseif t=="ss"
-		md"""**Boundary Conditions for a Simply Supported beam**
-			
-			a0 = $(@bind a NumberField(-10:0.01:10;default=0)) 
-	
-			aL = $(@bind b NumberField(-10:0.01:10;default=0))  
-	
-			Moment at x=0 (M0) = $(@bind Q NumberField(-10:0.01:10;default=-1))
-	
-			Moment at x=L (ML) = $(@bind ML NumberField(-10:0.01:10;default=1))"""
-		end
-end
-
-# ╔═╡ 4c1d7992-f668-11ea-01e2-6300503d267d
-begin
-if analysis == "dynamic"
-	md"""**Dynamic pameters**
-		
-	Total time steps (Mtau) = $(@bind Mtau NumberField(1:1:500;default=200))
-	
-	stepping(tau) = $(@bind tau NumberField(0:0.001:1;default=0.1))
-	
-	β = $(@bind beta NumberField(0:0.001:1;default=0.25))
-	
-	γ = $(@bind gamma NumberField(0:0.001:1;default=0.5))"""
-end
-end
-
-# ╔═╡ 58ce39ee-fe93-11ea-3244-f5d7f3935485
-md"""UDL (q) = $(@bind ul NumberField(-10:0.1:10;default=0))"""
-
-# ╔═╡ f2b09b22-f03a-11ea-2baf-ff3e1721752d
-md" Using the parameters above, we intend to solve the system with the `Finite Element Method`. "
+In this project, we have analyzed the static and dynamic equations of simply supported and clamped beams based on the Euler Bernoulli beam theory. Finite element formulation  has been used for the bending equations via cubic piecewise differentiable functions.
+Variational  statement  is adopted to derive the governing equations and element matrices. The  mathematical  model  is  presented in  section  2. After that, the variational formulation and corresponding finite element basis are explained in detail in section  3. Section 4 is devoted to certain numerical experiments. The  accuracy  and  reliability  of this model is presented and verified comparing the results with the closed form solutions.\
+This project has been done using the Pluto editor, a reactive notebook environment for Julia. Hence, we also detail our implementation alongside the theory.   """
 
 # ╔═╡ 66e54c52-0002-11eb-27d1-45419b83cfa6
 md"""
-#### **3. Static bending equation**
+### **2. Governing equations**
 
-The static bending equation is described below
+![Beam \label{fig1}](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/cantilever.png)\
+$\qquad \qquad \qquad \space$ Fig:1 Cantilever beam domain with terminologies [^Kar16]
 
-$(EIw'')''(x) = q(x), x \in [0,L], q \in V,$ \
+
+The static bending equation is described below [^Kar16]
+
+\begin{equation}
+(EIw'')''(x) = q(x),\hspace{0.5cm} x \in \Omega=[0,L],\hspace{0.2cm} (q \in V,\hspace{0.1cm} (EIw'') \in V),
+\label{eq:1}
+\tag{1}
+\end{equation}
 where the set of piecewise twice differentiable functions is defined as\
-$V$ := $C^{2,p}(0,L) = \{ \phi : [0,L] \rightarrow \mathbb{R}| \phi \in C(0,L), \phi' \in C(0,L), \phi'' \in C^p(0,L) \}$ \
-and\
-
+$V$ := $C^{2,p}(0,L) = \{ \phi : \Omega \rightarrow \mathbb{R}| \phi \in C(0,L), \phi' \in C(0,L), \phi'' \in C^p(0,L) \}$ \
+and,\
 $w(x)$ - height of the neutral axis (bending curve) at $x$ \
 $E = E(x)$ Young's module \
 $I = I(x)$ area moment of inertia: $I(x) = \int z^2 dydz$ \
@@ -158,18 +87,78 @@ Further notation:\
 
 $M^x(w)$ = $EIw''(x)$ bending moment at $x$  \
 $Q^x(w)$ = -$(EIw'')'(x)$ shear force at $x$ \
-\
-!!!!!!!!!!!Insert picture of the "cantilever" from the Graphics folder!!!!!\
-\
+
+To get a unique solution of the beam equation, two essential and two natural boundary conditions need to be added.
+For a cantilever that is clamped at one end with tip laoding we see that,
+$\begin{equation*}
+    w(0)=a, \quad w'(0)=b, \quad Q^L(w)=Q_L, \quad M^L(w)=M_L
+\end{equation*}$, where $a,b,Q_L,M_L \in \mathbb{R}$ are given.
+
+In the case of a simply supoorted beam, these then become, 
+$\begin{equation*}
+    w(0)=a_0, \quad w(L)=a_L, \quad M^0(w)=M_0, \quad M^L(w)=M_L
+\end{equation*}$, where $a_0,a_L,M_0,M_L \in \mathbb{R}$ are given.
 
 
+In the dynamic case the bending curve as well as all forces and boundary conditions depend on time. In particular the bending curve at time t is given by $w(x, t)$ governed by, [^Kar16]
+
+$$\begin{array}
+\mu \ddot{w}+\left(E I w^{\prime \prime}\right)^{\prime \prime}=q, \hspace{1cm} x \in \Omega, \hspace{0.2cm} t \in (0,Τ] \\
+w(x ,0) = w_0, \hspace{1cm} x \in \Omega
+\label{eq:2} 
+\tag{2}
+\end{array}$$
+using initial data, $w_0 \in V$ and where $\mu = \mu(x)$ is the mass density (more precisely: the mass per unit length). $\ddot{w}$ denotes the second derivative of $w$ with respect to $t$ and all other definitions follow from \eqref{eq:1}. One important fact about this differential equation is the absence of a disspation term, implies that the transverse delfections of the beam will be undamped over time. 
 """
 
-# ╔═╡ 00fbb85c-f508-11ea-21b0-1d20d4bdb05d
-md"""#### 3. Domain generation
-In this section, the domain is being generated based on the parameters selected by the user in Section 2.
+# ╔═╡ 98d94f60-000f-11eb-1e15-6932b56cb721
+md"""### 3 Weak formulation 
+#### 3.1 Variational form
+Using the strong form from the static case \eqref{eq:1}, we formulate the weak form, assuming that $w$ satisfies \eqref{eq:1} and the appropriate boundary conditions.[^Kar16]  
+$\begin{equation}
+\int_{0}^L EIw'' \psi'' = \int_{0}^L q\psi + b(\psi), \hspace{1cm} ∀ \psi \in V, 
+\tag{3}
+\label{eq:3}
+\end{equation}$
+
+where,  $b(\psi) = Q_L \psi(L) - Q_0 \psi(0) + M_L \psi'(L) - M_0 \psi'(0)$.\
+Now, we choose $\psi \in V$ such that $\psi(0) = 1$, $\psi'(0)=\psi'(L)=0$. Therefore, $b(\psi)=Q_0$.  
+
+The same procedure as in the static case (multiplication with  and partial integration) yields the weak formulation: 
+
+$\begin{equation}
+\int_{0}^{L} \ddot{w} \psi+\int_{0}^{L} E I w^{\prime \prime} \psi^{\prime \prime}=\int_{0}^{L} q(\cdot, t) \psi+b(\psi, t),
+\label{eq:4}
+\tag{4}
+\end{equation}$
+
+where, $b(\psi, t)=Q_{L}(t) \psi(L)-Q_{0}(t) \psi(0)+M_{L}(t) \psi^{\prime}(L)-M_{0}(t) \psi^{\prime}(0).$[^Kar16]\
 """
 
+# ╔═╡ 6c98fffc-034d-11eb-1c1a-ffa28fdb44ca
+md"""#### 3.2 Galerkin's method
+An approximate solution of w, wh needs to be computed. 
+To calculate $w_h$, a finite dimensional subspace $V_h$ (Ansatz space) of the space $V$ needs to be chosen with basis $\phi_1 \dots, \phi_n: [0,L] \rightarrow \mathbb{R}$, where
+$w_h(x) = \sum_{k=1}^{n} w_k \phi_k(x), w_k \in R.$ [^Kar16]
+\
+Inserting this Ansatz into the weak formulations \eqref{eq:3} with Galerkin Bubnov[^Jog15] scheme, where $\varphi = \phi_j,\hspace{0.2cm} j=1,...,n$ 
+$\begin{equation}
+\int_{0}^L EIw_h'' \phi_j'' = \int_{0}^L q \phi_j + b(\phi j),\hspace{0.2cm} j = 1,..., n
+\tag{5}
+\label{eq:5}
+\end{equation}$
+And in \eqref{eq:4} for w the equivalent (time depentent) Galerkin ansatz, 
+$$w_h(x,t) = \sum_{k=1}^{N} w_k(t) \phi_k(x)$$
+and for $\varphi$ the same basis functions as above, $\phi_j$, $j=1, ...n$ we get a similar equation with one additional term representing the mass density. 
+$\begin{equation}
+\int_0^L \ddot{w_h} \phi_j + \int_{0}^L EIw_h'' \phi_j'' = \int_{0}^L q \phi_j + b(\phi j),\hspace{0.2cm} j = 1,..., n
+\tag{6}
+\label{eq:6}
+\end{equation}$
+"""
+
+# ╔═╡ 0a59769e-03bf-11eb-12a2-b51bcedc5fa6
+md"Let us now generate our discrete domain!"
 
 # ╔═╡ 16101166-f4de-11ea-25f8-bdfa0e83d2a4
 function gen_elements(L,N)
@@ -179,55 +168,25 @@ function gen_elements(L,N)
 	return xh,ne,conn
 end
 
-# ╔═╡ 548dde12-f508-11ea-2ef8-fffbcd320ec8
-xh,ne,conn=gen_elements(L,N);
-
-# ╔═╡ c15ccb10-fdb7-11ea-2491-4557ac7265e5
-#scatter(xh,5*ones(N),ylims=(0,10),yaxis=nothing,size=(700,150),label="Ω")
-
 # ╔═╡ 2c02f7ba-f4ed-11ea-19c9-9bb69c5de35b
 function local2global(ne)
 	return [[2*e-1,2*e,2*e+1,2*e+2] for e=1:ne]
 end
 
-# ╔═╡ 998838b6-f508-11ea-0949-8b40b202bab8
-dofs=local2global(ne);
+# ╔═╡ 38c83eb6-030b-11eb-1f73-fff40cea1d21
+md"**Note:** For simplicity, we assume here that the beam has a constant bending stiffiness `EI` and mass diistribution `μ` throughout the domain. It is also assumed that the distributed load is uniform."
 
-# ╔═╡ 2b84ae9c-f66d-11ea-38e4-c1e6e9e7b7b8
-#Assumption of constant q,EI,mu throughout domain. Change for different distribution
-function constant_dist(ul,μ,ei)
-	qv = ul*ones(ne);
-	EI = ei*ones(ne);
-	mu = μ*ones(ne);
-	return qv,mu,EI
-end
+# ╔═╡ 43f4577a-03ba-11eb-10c2-878bee2418a0
+md"""**Choice of Ansatz space** \
+$V_h$ was chosen to be the space of piecewise cubic polynomials, according to [^Kar16].
 
-# ╔═╡ 8cbd99bc-f66d-11ea-3c74-2b9b9999741d
-qv,mu,EI=constant_dist(ul,μ,ei); #taking constant distribution of q, EI and μ on domain
+$V_h = \{ \phi \in V | \phi|_{\left(x_i,x_{i+1}\right)} \text{ is a polynomial of degree} \leq 3, i=1,\dots,N-1\}$ 
 
-# ╔═╡ 98d94f60-000f-11eb-1e15-6932b56cb721
-md"""#### 4. Galerkin methods and Ansatz space
-An approximate solution of w, wh needs to be computed. 
-To calculate approximate solutions $w_h$ of the bending equation, a finite dimensional subspace $V_h$ (Ansatz space) of the space $V$ needs to be chosen with basis $\phi_1 \dots, \phi_N: [0,L] \rightarrow \mathbb{R}$, where
-$w_h(x) = \sum_{k=1}^{N} w_k \phi_k(x), w_k \in R.$
-\
-Inserting this Ansatz into the weak formulation with Galerkin Bubnov scheme, where $\varphi = \phi_j, j=1,...,N$
-\
-$\int_{0}^L EIw_h'' \phi_j'' = \int_{0}^L q \phi_j + b(\phi j), j = 1,..., N$\
-Then the equations can be written in the matrix-vector form:
-S**w** = **q** + $Q_L$**e**$_L$ - $Q_0$**e**$_0$ + $M_L$**d**$_L$ - $M_0$**d**$_0$
+Each $\phi \in V_h$ can be uniquely written as
 
-**Choice of Ansatz space** \
-In order that $\phi''$ is well defined, $\phi$ needs $\phi \in C^1$, i.e. both $\phi$ and $\phi'$ need to be continuous.\
-A good choice can be:
-$n\geq 2$. Let $h = L/(n-1)$, $x_i = h(i-1)$ and $i = 1,\dots,n$.\
+$\phi = \sum_{k=1}^{2N} u_k \phi_k = \sum_{i=1}^{N} (u_{2i-1}\phi_{2i-1} + u_{2i}\phi_{2i})$
+with the basis functions $\phi_i \in V_h$, for $i=1,\dots,2N$, define:
 
-$V_h = \{ \phi \in V | \phi|_{\left(x_i,x_{i+1}\right)} \text{ is a polynomial of degree} \leq 3, i=1,\dots,n-1\}$ \
-$V_h$ was chosen to be the space of piecewise cubic polynomials.
-
-Each $\phi \in V_h$ is uniquely determined by the values $u_{2i-1}:= \phi(x_i)$ and $u_{2i} = \phi'(x_i)$ and can be uniquely written as
-$\phi = \sum_{k=1}^{2n} u_k \phi_k = \sum_{i=1}^{n} (u_{2i-1}\phi_{2i-1} + u_{2i}\phi_{2i})$
-with the basis functions $\phi_i \in V_h$, for $i=1,\dots,2n$, define:\
 $\phi_1(x) =\begin{cases}
         \bar{\phi}_1(\frac{x}{h}) & x\in[0,h]\\
         0 & \text{otherwise},
@@ -236,7 +195,8 @@ $\phi_2(x) = \begin{cases}
 h\bar{\phi}_2(\frac{x}{h}) & x\in[0,h]\\
 0 & \text{otherwise},
 \end{cases}$\
-for $i=2,\dots,n-1$:\
+for $i=2,\dots,N-1$:
+
 $\phi_{2i-1}(x) = \begin{cases}
         \bar{\phi}_3(\frac{x-x_{i-1}}{h}) & x\in[x_{i-1},x_i]\\
         \bar{\phi}_1(\frac{x-x_{i}}{h}) & x\in[x_{i},x_{i+1}]\\
@@ -247,16 +207,24 @@ h\bar{\phi}_4(\frac{x-x_{i-1}}{h}) & x\in[x_{i-1},x_i]\\
 h\bar{\phi}_2(\frac{x-x_{i}}{h}) & x\in[x_{i},x_{i+1}]\\
 0 & \text{otherwise},
 \end{cases}$\
+
+and,
+
+$\phi_{2N-1}(x) =\begin{cases}
+        \bar{\phi}_1(\frac{x-x_{N-1}}{h}) & x\in[x_{N-1},L]\\
+        0 & \text{otherwise},
+\end{cases}$
+$\phi_{2N}(x) = \begin{cases}
+h\bar{\phi}_4(\frac{x-x_N}{h}) & x\in[x_{N-1},L]\\
+0 & \text{otherwise},
+\end{cases}$
+
+
 where,
-\
-$\bar{\phi}_1(\xi) = 1 - 3\xi^2 + 2\xi^3$\
-$\bar{\phi}_2(\xi) = \xi (\xi - 1)^2$\
-$\bar{\phi}_3(\xi) = 3\xi^2 - 2\xi^3$\
-$\bar{\phi}_4(\xi) = \xi^2 (\xi - 1)$\
-\
-In the next section of the report, it is possible to check the approximation of $w_h(x)$ with basis functions chosen as above.
 
+$\bar{\phi}_1(\xi) = 1 - 3\xi^2 + 2\xi^3, \hspace{1cm} \bar{\phi}_2(\xi) = \xi (\xi - 1)^2$,
 
+$\bar{\phi}_3(\xi) = 3\xi^2 - 2\xi^3, \hspace{1cm} \bar{\phi}_4(\xi) = \xi^2 (\xi - 1)$\
 """
 
 # ╔═╡ 466ce928-f03b-11ea-1b7e-a9e26cbccdcc
@@ -318,88 +286,41 @@ function basis1D(xh,N)
 	return phi,phid,phidd
 end
 
-# ╔═╡ 3f7a5a08-f03e-11ea-1fcf-83e5b5e57d28
-phi,phid,phidd= basis1D(xh,N);
-
 # ╔═╡ 098b7a0a-f2c1-11ea-31d6-91b4b485ac41
-md"###### Do you want to check whether our basis functions can approximate a function?
-Tick the box below"
-
-# ╔═╡ d8fa3576-fea1-11ea-127e-01b24b313b6b
-md"Check $(@bind approximate CheckBox()) "
-
-# ╔═╡ dbb675c8-f2b4-11ea-3ffa-81e83739270d
-function check(xh,f)
-	n=length(xh)
-	fd = xh -> ForwardDiff.derivative(f,xh)
-	u = zeros(2*n)
-	for i = 1:N
-		u[2*i-1] = f.(xh[i])
-		u[2*i] = fd.(xh[i])
-	end
-	p = sum((u[2*i-1]*phi[2*i-1].(xh) + u[2*i]*phi[2*i].(xh)) for i=1:n)
-	plot(xh,f.(xh),label="actual")
-	scatter!(xh,p,label="piecewise cubic")
-end
+md"###### Do you want to check whether our basis functions can approximate a function?"
 
 # ╔═╡ 3f0f1d7a-fea2-11ea-1d7d-bffce1d81fec
 f(x)=cos(x)*sin(x) ##Give a function
 
-# ╔═╡ c78ce07a-f2bc-11ea-28bd-a1df0c486ed1
-if approximate
-	check(xh,f::Function);
-end
+# ╔═╡ d8fa3576-fea1-11ea-127e-01b24b313b6b
+md"Check $(@bind approximate CheckBox()) "
 
 # ╔═╡ 04fb4452-f2c1-11ea-393c-4b9b88d2aaf8
-md"### 5. Calculation of element FE matrices and vectors"
+md"#### 3.3 Finite Element matrices and vectors"
 
 # ╔═╡ 1f9d6fd0-002a-11eb-2fc2-87a8a7250e95
-md"""In order to compute the approximate solution $w_h$, the finite dimensional subspace $V_h$ with basis functions is used. Inserting the Ansatz into the weak formulation with Galerkin Bubnov scheme, a system of $N$ linear equations with $N$ unknowns $w_1,....,w_N$ is obtained. And this linear system is as follows:
-S**w** = **q** + $Q_L$**e**$_L$ - $Q_0$**e**$_0$ + $M_L$**d**$_L$ - $M_0$**d**$_0$
+md""" 
+We consider a spatial discretizaton of $\Omega$ into "Finite Elements" $n_e=N-1$, which are disjoint subdomains of, $$\Omega = \bigcup_{e=1}^{n_e} \Omega^e$$ where, $\Omega^e:(x_i,x_{i+1}) \hspace{0.2cm} \& \hspace{0.2cm} i=1,..n_e$. 
+We write the weak form over interval $\Omega$ as the sum of contributions from each subdomain, $\Omega^e$ [^Jog15]. 
 
-"""
+Hence, \eqref{eq:5} and \eqref{eq:6} are reformulated as, 
 
-# ╔═╡ bc0f5540-002a-11eb-32d1-558ea518bc1e
-md"""where, 
-$w = \begin{bmatrix}
-            w_1\\
-            \vdots\\
-            w_N 
-\end{bmatrix}$,
-                 $\quad 
-                 \hat{q}=
-                 \begin{bmatrix}
-                       \int q\phi_1\\ 
-                        \vdots\\ 
-                        \int q\phi_N\\
-                  \end{bmatrix},
-                  \quad$ 
-                 $e_x=
-                 \begin{bmatrix}
-                       \phi_1(x)\\ 
-                        \vdots\\
-                        \phi_N(x)
-                  \end{bmatrix},
-                  \quad$
-$d_x=
-                 \begin{bmatrix}
-                       \phi'_1(x)\\ 
-                        \vdots\\
-                        \phi'_N(x)
-                  \end{bmatrix}$
-"""
+$\begin{equation} 
+\sum_{k=1}^{2N} \Bigl( \sum_{e=1}^{n_e} \overbrace{\int_{x_i}^{x_{i+1}} EI\phi_k'' \phi_j''}^{S_e} \Bigr) w_k = \sum_{e=1}^{n_e} \Bigl( \overbrace{\int_{x_i}^{x_{i+1}} q \phi_j}^{F_e} \Bigr) + Q_L \phi_j(L) - Q_0 \phi_j(0) + M_L \phi_j'(L) - M_0\phi_j'(0) 
+\tag{7}
+\label{eq:7}
+\end{equation}$
 
-# ╔═╡ 682a04b0-002b-11eb-0c65-ff6186c4585b
-md"""$S = \begin{bmatrix}
-    s_{11}& \cdots& s_{1N}\\
-    \vdots & \ddots& \vdots\\
-    s_{N1}& \cdots& s_{NN}\\
-\end{bmatrix} \quad \text{ and } \quad s_{jk} = \int^L_0 EI \phi''_k\phi''_j$
+and for the dynamic case,
 
-$S\in \mathbb{R}^{N \times N}$ is the stiffness matrix and is positive semi-definite for any $w \in \mathbb{R}^n$. \
+$\begin{equation}
+\sum_{k=1}^{2N} \Bigl( \sum_{e=1}^{n_e} \bigl(\overbrace{\int_{x_i}^{x_{i+1}} \mu \phi_k\phi_j}^{M_e} + \int_{x_i}^{x_{i+1}}  EI\phi_k'' \phi_j'' \bigr) \Bigr) w_k = \Bigl( \sum_{e=1}^{n_e} \int_{x_i}^{x_{i+1}} q \phi_j \Bigr) + Q_L \phi_j(L) - Q_0 \phi_j(0) + M_L \phi_j'(L) - M_0\phi_j'(0)
+\tag{8}
+\label{eq:8}
+\end{equation}$
 
-For all x: $w_h(x)$ = **e**$_x^T$**w**, $w_h'(x)$ = **d**$_x^T$**w**
-
+Let us compute these "local/element" contributions now. \
+**Note:** We assume here, for simplicity that point loads on the beam can only occur on the boundaries
 """
 
 # ╔═╡ 9aea9122-f5d0-11ea-1bc7-d5b5f6368033
@@ -455,37 +376,51 @@ function element_forces(q_e,x_e,phi_e)
 	return f_e
 end
 
-# ╔═╡ 9e66cea0-0030-11eb-26e9-4d81e95c1cbc
-md"### 6. Boundary conditions"
+# ╔═╡ 0687b660-03d4-11eb-3d6c-dd21036c93eb
+md"In our implementations,for the $e^{th}$ element `element_mass()` calculates $M_e$, `element_stiffness()` calculates $S_e$ and `element_forces()` calculates $F_e$. We use appropriate Gauss quadrature integration rules to compute the matrices."
+
+# ╔═╡ a94fb776-f66e-11ea-205e-21f70a68ef1d
+md"#### 3.4 Assembly"
+
+# ╔═╡ 682a04b0-002b-11eb-0c65-ff6186c4585b
+md""" The global stiffness matrix $S$ that is used to solve the system, is then obtained by an appropriate local to global transformation of the indices.
+This is kept track by the function `local2global()` in our implementation. Finally the global stiffness matrix is equivalent to,[^Kar16]  
+
+$\begin{equation}
+S = \begin{bmatrix}
+    s_{11}& \cdots& s_{1 2N}\\
+    \vdots & \ddots& \vdots\\
+    s_{2N1}& \cdots& s_{2N 2N}\\
+\end{bmatrix} \quad \text{ and } \quad s_{jk} = \int^L_0 EI \phi''_k\phi''_j\end{equation}$
+
+$S\in \mathbb{R}^{2N \times 2N}$ is the stiffness matrix and is positive semi-definite for any $w \in \mathbb{R}^{2N}$. 
+"""
 
 # ╔═╡ c59aa2f0-0033-11eb-0b4f-d53534e78f1a
 md"""
-The global stiffness matrix $S$ that is used to solve the system, is then obtained by an appropriate local to global transformation of the indices.
-Note that $S \in \mathbb{R}^{2N\times 2N}$.
-
-On a similar note, the mass matrix which is used to calculate the load vector(also used in the dynamic case as described further) is formulated as follows. 
+On a similar note, the mass matrix which is used to calculate the load vector(also used in the dynamic case as described further) is formulated as follows.[^Kar16] 
 
 $\begin{equation*}
 M = \begin{bmatrix}
-    m_{11}& \cdots& m_{1N}\\
+    m_{11}& \cdots& m_{12N}\\
     \vdots & \ddots& \vdots\\
-    m_{N1}& \cdots& m_{NN}\\
+    m_{2N1}& \cdots& m_{2N2N}\\
     \end{bmatrix} \quad \text{ where, } \quad m_{ij} = \int^L_0 \phi_i\phi_j
 \end{equation*}$
-\
-and the load vector is given by $\[\hat{q} = Mq\\\]\$
 
-To get a unique solution of the beam equation, two essential and two natural boundary conditions need to be added.
-$\begin{equation*}
-    w(0)=a, \quad w'(0)=b, \quad Q^L(w)=Q_L, \quad M^L(w)=M_L
-\end{equation*}$
+and the load vector is given by $\hat{q} =
+                 \begin{bmatrix}
+                       \int q\phi_1\\ 
+                        \vdots\\ 
+                        \int q\phi_{2N}\\
+                  \end{bmatrix},$
 
-where $a,b,Q_L,M_L \in \mathbb{R}$ are given. Incorporating these into the linear system results in the following extensions for the cantilever beam and for the simply supported beam, respectively. 
-
+Incorporating these into the linear system results in the following extensions for the cantilever beam and for the simply supported beam, respectively. 
 """
 
 # ╔═╡ 88668960-0035-11eb-25b3-c3aa828156fc
-md"""
+md"""##### Static case
+
 $\begin{bmatrix}
 S& e_0& d_0\\
 e^T_0& 0&  0\\
@@ -498,10 +433,7 @@ M_0\\
                                    q+Q_Le_L + M_Ld_L\\
                                    a\\
                                    b\end{bmatrix}$
-"""
 
-# ╔═╡ f35502b0-003a-11eb-1d90-e91d7447f1f2
-md"""    
 $\begin{bmatrix}
     S& e_0& -e_L\\
     e^T_0& 0&  0\\
@@ -515,37 +447,38 @@ $\begin{bmatrix}
                                    -a_0\\
                                    -a_L
 \end{bmatrix}$
+
+
+where, 
+$w = \begin{bmatrix}
+            w_1\\
+            \vdots\\
+            w_{2N} 
+\end{bmatrix}$,
+$e_x=
+                 \begin{bmatrix}
+                       \phi_1(x)\\ 
+                        \vdots\\
+                        \phi_{2N}(x)
+                  \end{bmatrix},
+                  \quad$
+$d_x=
+                 \begin{bmatrix}
+                       \phi'_1(x)\\ 
+                        \vdots\\
+                        \phi'_{2N}(x)
+                  \end{bmatrix}$
+
+For all x: $w_h(x)$ = **e**$_x^T$**w**, $w_h'(x)$ = **d**$_x^T$**w**. [^Kar16]
+
+Function `assemble()` creates this linear equation system for the static case using sparse matrices.
 """
-
-# ╔═╡ ed182740-0032-11eb-3715-d938b0f81ec2
-md"""
-
-To get a unique solution of the beam equation, two Dirichlet
-boundary conditions need to be added. For a left sided clamped beam (cantilever) these conditions are $w(0) =a$; $w'(L) = b$, where a, b $\in R$ are given. The Galerkin approximation should satisfy these
-conditions, too and incorporating these into the linear system of equations
-
-"""
-
-# ╔═╡ 957d80c0-003c-11eb-3846-850ad97d46c9
-md"##### Dynamic case"
 
 # ╔═╡ dce9f510-003c-11eb-24be-23294f7fac9f
-md"""
-In the dynamic case the bending curve as well as all forces and boundary conditions depend on time. In particular the bending curve at time t is given by $w(x, t), x \in [0,L]$. The bending equation is given by
+md""" ##### Dynamic Case
 
-$\mu \ddot{w}+\left(E I w^{\prime \prime}\right)^{\prime \prime}=q$
+For the dynamic case `dyn_assemble()` yields the following DAEs for a cantilever and a simply supported beam respetively, \
 
-where $\mu = \mu(x)$ is the mass density (more precisely: the mass per unit length) and $\ddot{w}$ denotes the second derivative of $w$ with respect to $t$. During all the simulations, the mass density is assumed to be constant through the beam. One important fact about this differential equation is the absence of a disspation term,without it, the vibration movement of the beam will be non-damped over time. This not only mean that the movement of the beam will not stop, but also that all the vibration modes (especially the higher ones) will be present during the whole simulation. 
-
-The same procedure as in the static case (multiplication with  and partial integration) yields the weak formulation: 
-
-$\int_{0}^{L} \ddot{w} \psi+\int_{0}^{L} E I w^{\prime \prime} \psi^{\prime \prime}=\int_{0}^{L} q(\cdot, t) \psi+b(\psi, t),$\
-
-where 
-
-$b(\psi, t)=Q_{L}(t) \psi(L)-Q_{0}(t) \psi(0)+M_{L}(t) \psi^{\prime}(L)-M_{0}(t) \psi^{\prime}(0).$\
-
-This domain discretization yields the following DAE that will be solved by the Newmark's method: \
 
 $$\left[\begin{array}{ccc}
 M & 0 & 0 \\
@@ -567,51 +500,201 @@ M_{0}
 \underline{q}+Q_{L} \underline{e}_{L}+M_{L} \underline{d}_{L} \\
 a \\
 b
-\end{array}\right]$$\
-\
-Here $M$ describes the mass matrix of the system, given by $M = [m_{ij}]_{i,j =1}^N$. As for the stiffness matrix $S$, that we derived above, we considered the local mass matrix $M_{loc}$ for the reference interval $[0,h]$. The global mass matrix $M$ will then again be calculated by a transformation from local to global coordinates.
-It is $m_{ij} = \int_0^L \mu \phi_i \phi_j$
-and 
-$
-M_{loc} = 
-\frac{\mu\cdot A \cdot h}{420}
+\end{array}\right]$$
+
+
+
+$$\left[\begin{array}{ccc}
+M & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0
+\end{array}\right]\left[\begin{array}{c}
+\underline{\ddot{w}} \\
+\ddot{Q}_{0} \\
+\ddot{M}_{0}
+\end{array}\right] +
 \begin{bmatrix}
-156 & 22h & 54 & -13h\\
-22h & 4h^2 & 13h & -3h^2\\
-54 & 13h & 156 & -22h\\
--13h &-3h^2 & -22h & 4h^2\\
-\end{bmatrix}.
-$
-
-
+    S& e_0& -e_L\\
+    e^T_0& 0&  0\\
+    -e^T_L& 0& 0\\
+    \end{bmatrix} \begin{bmatrix}
+                   w \\
+                   Q_0\\
+                   Q_L\\
+                  \end{bmatrix} = \begin{bmatrix}
+                                   q-M_0d_0 + M_Ld_L\\
+                                   -a_0\\
+                                   -a_L
+\end{bmatrix}$$ [^Kar16]
 """
 
 # ╔═╡ e1d4afc0-00cd-11eb-2cd3-6fe14acc0080
 md"""
-**The Newmark's algorithm** consists of : \
-$\text { Compute } u_{j}^{*} \text { and } \dot{u}_{j}^{*} \text { using }:$
+The above DAEs are solved using the **Newmark's algorithm**.[^Kar20] We list the algorithm for our case:
 
-$$u_{j}^{*} = u_{j}+\dot{u}_{j} h_{j}+\left(\frac{1}{2}-\beta\right) \ddot{u}_{j} h_{j}^{2}$$
+**Algorithm 1**:  Newmark's method
+>Algorithm parameters: step size $\tau$, $\beta \in [0,0.5]$, $\gamma \in [0,1]$\
+> Initialize $w_0 = w(t_0), \hspace{0.2cm} \ddot{w_0} = \ddot{w}(t_0)$\
+>For $j=0$ to $T$:\
+>$\quad$ Compute: $w_{j}^* = w_{j} + \dot{w}_{j}\tau_{j} + (0.5 - \beta)\ddot{w}\tau_{j}^2$ \
+>$\quad$ Compute the solution $\ddot{w}_{j+1}$ using, $(M+ \beta \tau_{j}^2 S)\ddot{w}=f-Sw^{*}_j$\
+>$\quad$ Compute $w_{j+1} = w_{j}^* + \beta \ddot{w}_{j+1}\tau_{j}^2$ \
+>End
 
-$$\dot{u}_{j}^{*} =\dot{u}_{j}+(1-\gamma) \ddot{u}_{j} h_{j}$$
-
-Compute the solution $\ddot{u}_{j+1}$ with: 
-
-$$f\left(\ddot{u}_{j+1}, \dot{u}_{j}^{*}+\gamma \ddot{u}_{j+1} h_{j}, u_{j}^{*}+\beta \ddot{u}_{j+1} h_{j}^{2}, t_{j+1}\right)=0$$\
-
-and finally, compute $u_{j+1}$ and $\dot{u}_{j+1}$ using: \
-
-$$u_{j+1}=u_{j}^{*}+\beta \ddot{u}_{j+1} h_{j}^{2}, \quad \dot{u}_{j+1}=\dot{u}_{j}^{*}+\gamma \ddot{u}_{j+1} h_{j}.$$
-
-The parameter values were chosen to be $\beta = 1/4$ and $\gamma = 1/2$.
+The parameter values were chosen to be $\beta = 1/4$ and $\gamma = 1/2$, as specified in [^Kar20]. 
+Function `newmark_step()` implements this time stepping algorithm for us. 
 
 """
 
-# ╔═╡ a94fb776-f66e-11ea-205e-21f70a68ef1d
-md"### Global assembly"
+# ╔═╡ b9cb119e-f5e8-11ea-302d-6db9fec26b2b
+function newmark_step(Mtau,xh,w,tau,beta,gamma,M_e,S_e,phi)
+	w_interp = zeros(length(xh),Mtau);
+	udot = 0*w;
+	udot[end-1:end] =w[end-1:end];
+	udotdot =  0*w;
+	udotdot[end-1:end] =w[end-1:end];
+	for i = 1:Mtau
+		ustar = w + udot*tau + (1/2 - beta).*udotdot.*tau^2;
+		ustardot= udot + (1-gamma)*tau*udotdot;
+		b= -S_e*ustar;
+		udotdot = (M_e + (beta*tau^2)*S_e)\b;
+		w = ustar + beta*tau^2*udotdot;
+		udot = ustardot + gamma*tau*udotdot;
+		
+		w_interp[:,i] = sum((w[2*j-1]*phi[2*j-1].(xh) + w[2*j]*phi[2*j].(xh)) for j=1:length(xh));
+	end
+	return w_interp
+end
 
-# ╔═╡ 0c893646-f66f-11ea-1ca9-e32285b8c42b
-md"##### Static case"
+# ╔═╡ b59aacb2-f50d-11ea-34dd-67c479511398
+md"#### 3.5 Solving the system"
+
+# ╔═╡ e2536ecc-f674-11ea-386d-274c40e5a846
+md"### 4 Results and Post Processing"
+
+# ╔═╡ 3cdef684-042d-11eb-0d35-d340aa5003bc
+md"""Here we present some pre compiled results of our implementation. The GUI explained below can be used for plotting other results.
+"""
+
+# ╔═╡ 74f78586-042d-11eb-3a10-dd31b9666f5c
+md"""#### 4.1 The Static Case
+We compare our computed FEM results with the closed form solutions obtained from literature. [^Tim40],[^Wik20] We investigate different loading scenarios and find that our computed FEM solution matches the closed form solutions accurately. Figures [2-7] show the corresponding results. 
+
+**Cantilever End load** 
+![Fig: Cantilever-End load](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/endload.svg)
+Fig 2: Cantilever end load, exact solution: $w(x)= (\frac{Q_L x^2}{6EI})(3L-x)$
+
+**Cantilever End Moment**
+![Fig: Cantilever-End Moment](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/endmoment.svg)
+Fig 3: Cantilever end load, exact solution: $w(x)= \frac{M_L x^2}{2EI}$
+
+**Cantilever Distributed Load**
+![Fig: Cantilever-Distributed Load](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/distload.svg)
+Fig 4: Cantilever dist load, exact solution: $w(x)= \frac{q x^2}{24EI}(6L^2 - 4Lx + x^2)$
+
+**Cantilever End Moment and Load**
+![Fig: Cantilever-EndMomentandload](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/endloadmoment.svg)
+Fig 5: Cantilever combined moment and load at tip, exact solution: $w(x)= \frac{x^2}{6EI}(3M_L + 3L Q_L -Q_L x)$
+
+**Simply Supported Beam with equal end moments**
+![Fig: Simply Supported-Moments](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/ss_endmoments.svg)
+Fig 6: Simply Supported with equal end moments, exact solution: $w(x)= \frac{M_L x}{2EI}(L-x)$
+
+**Simply Supported Beam with distributed loading**
+![Fig: Simply Supported-Distributed loading](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/ss_distload.svg)
+Fig 7: Simply Supported with uniform loading, exact solution: $w(x)= \frac{qx}{24EI}(L^3 - 2Lx^2 + x^3)$
+
+"""
+
+# ╔═╡ 11d73472-0312-11eb-2fc0-e9f17e78dd35
+md" #### 4.2 The dynamic case
+
+The dynamic equation is solved and plotted over time for both the cantilever and the simply supported beam.(See movie) The initial condition $w_0$ (Ref: \eqref{eq:2}) is inputed through the computed solution of the static equation. We observe that due to the absence  of a disspation term, the vibration movement of the beam will be non-damped over time. The movement of the beam will not stop, but also due to the fact that there is no external loading, it will be harmonic.[^Jog15]]  
+
+**Computation of eigenmodes**
+
+Consider this special case of undamped force free matrix equation, 
+
+$M\ddot{w} + Sw = 0 \tag{9} \label{eq:9}$
+
+In the absence of a transverse load, we have the free vibration equation. This equation can be solved using a Fourier decomposition of the displacement into the sum of harmonic vibrations of the form $w=\bar{w} e ^{i \omega t}$. Observe that \eqref{eq:9} can be then rewritten as a Eigenvalue problem,
+
+$\left(M-\omega^2 S\right)\bar{w} = 0  \tag{10} \label{eq:10}$
+Every $j^{th}$ eigenvalue $\lambda_j = \omega_{j}^2$ can give us the j-th natural frequency $\omega_j$. The corresponding eigenvector $w_j$ can be used to calculate the displacement curve, called the mode shape.
+
+Solutions to the undampened forced problem have unbounded displacements when the driving frequency matches a natural frequency $\omega_j$, i.e., the beam can resonate. The natural frequencies of a beam therefore correspond to the frequencies at which resonance can occur.[^Jog15],[^Wik20]  
+
+We plot the mode shape and list the corresponding natural frequency for the cantilever and the simply supported beams. 
+
+**Cantilever** 
+![Fig: Cantilever](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/cantilever_modes.svg)
+Fig 8: Mode shapes along with natural frequencies $\omega$ for a cantilever beam
+
+**Simply Supported** 
+![Fig: Simply Supported](https://raw.githubusercontent.com/obin1/beam-simulation/master/graphics/ss-modes.svg)
+Fig 9: Mode shapes along with natural frequencies $\omega$ for the Simply Supported beam
+"
+
+
+# ╔═╡ 7171003c-f65f-11ea-0ed1-eb09bbaa9a32
+begin
+	
+	md"""
+	#### Parameters GUI
+	
+	**In this section, the properties and loading characterstics of the beam can be selected in order to find the solution of the case that the user is interested in. This will accordingly update the code and the Notebook will calculate and display the solution for the chosen case.**
+	
+	Analysis: $(@bind analysis Select(["static" => "Static" ,"dynamic" => "Dynamic"]))  Type:  $(@bind t Select(["c" => "Cantilever" ,"ss" => "Simply Supported"]))
+	
+	Length of the beam (L): 1 $(@bind L Slider(1:1:10;default=1)) 10
+
+	Number of nodes (N): 2 $(@bind N Slider(2:1:100;default=21)) 100
+	
+	Bending modulus (EI) = $(@bind ei NumberField(1:0.01:10;default=1))
+	
+	μ Mass/length = $(@bind μ NumberField(1:0.01:5;default=1))"""
+	
+end
+
+# ╔═╡ 548dde12-f508-11ea-2ef8-fffbcd320ec8
+xh,ne,conn=gen_elements(L,N);
+
+# ╔═╡ 998838b6-f508-11ea-0949-8b40b202bab8
+dofs=local2global(ne);
+
+# ╔═╡ 2b84ae9c-f66d-11ea-38e4-c1e6e9e7b7b8
+#Assumption of constant q,EI,mu throughout domain. Change for different distribution
+function constant_dist(ul,μ,ei)
+	qv = ul*ones(ne);
+	EI = ei*ones(ne);
+	mu = μ*ones(ne);
+	return qv,mu,EI
+end
+
+# ╔═╡ c15ccb10-fdb7-11ea-2491-4557ac7265e5
+scatter(xh,5*ones(N),ylims=(0,10),yaxis=nothing,size=(700,150),label="Ω")
+
+# ╔═╡ 3f7a5a08-f03e-11ea-1fcf-83e5b5e57d28
+phi,phid,phidd= basis1D(xh,N);
+
+# ╔═╡ dbb675c8-f2b4-11ea-3ffa-81e83739270d
+function check(xh,f)
+	n=length(xh)
+	fd = xh -> ForwardDiff.derivative(f,xh)
+	u = zeros(2*n)
+	for i = 1:N
+		u[2*i-1] = f.(xh[i])
+		u[2*i] = fd.(xh[i])
+	end
+	p = sum((u[2*i-1]*phi[2*i-1].(xh) + u[2*i]*phi[2*i].(xh)) for i=1:n)
+	plot(xh,f.(xh),label="actual")
+	scatter!(xh,p,label="piecewise cubic")
+end
+
+# ╔═╡ c78ce07a-f2bc-11ea-28bd-a1df0c486ed1
+if approximate
+	check(xh,f::Function);
+end
 
 # ╔═╡ 680184dc-f422-11ea-3aa4-e7d07918b79b
 function assemble(t,EI,Q,ML,qv,a,b,xh,ne,conn,phi,phidd,dofs)
@@ -656,11 +739,8 @@ function assemble(t,EI,Q,ML,qv,a,b,xh,ne,conn,phi,phidd,dofs)
 	return S_e,q_e;
 end	
 
-# ╔═╡ 84c0f1b8-f5d0-11ea-14e6-c987ddf8da67
-md"""##### Dynamic case"""
-
 # ╔═╡ 986616bc-f5dd-11ea-3975-bb8d25062cce
-function dyn_assemble(mu,EI,Q,ML,qv,xh,ne,conn,phi,phidd,dofs)
+function dyn_assemble(t,mu,EI,Q,ML,qv,a,b,xh,ne,conn,phi,phidd,dofs)
 	ndofs=length(phi);
 	nphi= length(dofs[1]); 
 	q = zeros(ndofs)
@@ -706,28 +786,51 @@ function dyn_assemble(mu,EI,Q,ML,qv,xh,ne,conn,phi,phidd,dofs)
 	return S_e,M_e,q_e;
 end	
 
-# ╔═╡ b9cb119e-f5e8-11ea-302d-6db9fec26b2b
-function newmark_step(Mtau,xh,w,tau,beta,gamma,M_e,S_e,phi)
-	w_interp = zeros(length(xh),Mtau);
-	udot = 0*w;
-	udot[end-1:end] =w[end-1:end];
-	udotdot =  0*w;
-	udotdot[end-1:end] =w[end-1:end];
-	for i = 1:Mtau
-		ustar = w + udot*tau + (1/2 - beta).*udotdot.*tau^2;
-		ustardot= udot + (1-gamma)*tau*udotdot;
-		b= -S_e*ustar;
-		udotdot = (M_e + (beta*tau^2)*S_e)\b;
-		w = ustar + beta*tau^2*udotdot;
-		udot = ustardot + gamma*tau*udotdot;
-		
-		w_interp[:,i] = sum((w[2*j-1]*phi[2*j-1].(xh) + w[2*j]*phi[2*j].(xh)) for j=1:length(xh));
-	end
-	return w_interp
+# ╔═╡ 65d5625e-f58b-11ea-1cb7-fb37ec26e2c3
+begin
+	if t=="c"
+		md"""**Boundary Conditions for a cantilever beam**
+	
+			a = $(@bind a NumberField(0:2;default=0)) 
+	
+			b = $(@bind b NumberField(-1:1;default=0))  
+	
+			End Load (QL) = $(@bind Q NumberField(-10:0.01:10;default=1)) 
+	
+			End Moment (ML) = $(@bind ML NumberField(-1:0.01:1;default=0))"""
+	elseif t=="ss"
+		md"""**Boundary Conditions for a Simply Supported beam**
+			
+			a0 = $(@bind a NumberField(-10:0.01:10;default=0)) 
+	
+			aL = $(@bind b NumberField(-10:0.01:10;default=0))  
+	
+			Moment at x=0 (M0) = $(@bind Q NumberField(-10:0.01:10;default=-1))
+	
+			Moment at x=L (ML) = $(@bind ML NumberField(-10:0.01:10;default=1))"""
+		end
 end
 
-# ╔═╡ b59aacb2-f50d-11ea-34dd-67c479511398
-md"### Solving the system"
+# ╔═╡ 4c1d7992-f668-11ea-01e2-6300503d267d
+begin
+if analysis == "dynamic"
+	md"""**Dynamic pameters**
+		
+	Total time steps (Τ) = $(@bind Mtau NumberField(1:1:500;default=200))
+	
+	stepping(τ) = $(@bind tau NumberField(0:0.001:1;default=0.1))
+	
+	β = $(@bind beta NumberField(0:0.001:1;default=0.25))
+	
+	γ = $(@bind gamma NumberField(0:0.001:1;default=0.5))"""
+end
+end
+
+# ╔═╡ 58ce39ee-fe93-11ea-3244-f5d7f3935485
+md"""UDL (q) = $(@bind ul NumberField(-10:0.1:10;default=0))"""
+
+# ╔═╡ 8cbd99bc-f66d-11ea-3c74-2b9b9999741d
+qv,mu,EI=constant_dist(ul,μ,ei); #taking constant distribution of q, EI and μ on domain
 
 # ╔═╡ 28da6d86-f4f7-11ea-010d-f7838116054e
 begin
@@ -737,15 +840,12 @@ begin
 		w_interp = sum((w[2*j-1]*phi[2*j-1].(xh) + w[2*j]*phi[2*j].(xh)) for j=1:N);
 		
 	elseif analysis=="dynamic"
-		S_e,M_e,q_e = dyn_assemble(mu,EI,Q,ML,qv,xh,ne,conn,phi,phidd,dofs);
+		S_e,M_e,q_e = dyn_assemble(t,mu,EI,Q,ML,qv,a,b,xh,ne,conn,phi,phidd,dofs);
 		w = S_e\q_e;
 		w_interp = newmark_step(Mtau,xh,w,tau,beta,gamma,M_e,S_e,phi);	
 	end
 	nothing
 end
-
-# ╔═╡ e2536ecc-f674-11ea-386d-274c40e5a846
-md"### Results and Post Processing"
 
 # ╔═╡ 1b080bca-fed5-11ea-169f-5930c4037901
 md"###### Let us analyze the results!"
@@ -789,7 +889,7 @@ function check_analytical(t,a,b,Q,ML,q,L,ei,xh)
 			end
 		elseif t=="ss"
 			if iszero(ML) && iszero(Q)
-				w_exact = (q*xh./(24*ei)).*(L^3-2*L*xh.*xh + xh.^3)
+				w_exact = (q*xh./(24*ei)).*(L^3 .- 2*L*xh.*xh .+ xh.^3)
 				text="with distibuted load"
 			elseif iszero(q)
 				w_exact = (ML*xh).*(L.-xh)/(2*ei)
@@ -851,10 +951,10 @@ if analysis=="dynamic"
 	if t=="c"
 		idx=3:2*N
 	elseif t=="ss"
-		part=[i for i in 3:(2*N-1)]
-		idx=pushfirst!(part,1)
+		part=[i for i in 2:(2*N-2)]
+		idx=push!(part,2*N)
 	end
-	
+	#Since the ARPACK is probabilistic, the sign of `ϕ` is 'random'
 	λ, ϕ = eigs(S_e[idx,idx],M_e[idx,idx]; nev=N,which=:SM);
 	eigenpairs = [(λ[i], ϕ[:,i]) for i in 1:length(λ)];
 	sort!(eigenpairs, by=pair -> abs(pair[1]))
@@ -869,15 +969,18 @@ begin
 		for eig_i in 1:no_of_eigs
 			w_mode = zeros(2*N)
 			val, vect = eigenpairs[eig_i]
-			vect = vect*sign(vect[5])
+			vect = vect*sign(vect[4])
 			w_mode[idx] = vect[:]
 			w_interp_eig[:,eig_i] = sum((w_mode[2*j-1]*phi[2*j-1].(xh) + w_mode[2*j]*phi[2*j].(xh)) for j=1:N)
 		end
+		freq=[round(sqrt(Real(λ[i]))/(2*pi),digits=2) for i=1:no_of_eigs]
 		if t=="c"
-			plotFEM(xh,w_interp_eig,"Mode Shapes-Cantilever",["Mode 1" "Mode 2" "Mode 3" "Mode 4" "Mode 5"])
-		elseif t=="ss"
-			plotFEM(xh,w_interp_eig,"Mode Shapes-Simply Supported",["Mode 1" "Mode 2" "Mode 3" "Mode 4" "Mode 5"])
-		end
+	plotFEM(xh,w_interp_eig,"Mode Shapes-Cantilever",
+                ["Mode 1, ω=$(freq[1])" "Mode 2, ω=$(freq[2])" "Mode 3, ω=$(freq[3])" "Mode 4, ω=$(freq[4])" "Mode 5 ω=$(freq[5])"])
+    elseif t=="ss"
+	plotFEM(xh,w_interp_eig,"Mode Shapes-Simply Supported",
+                ["Mode 1, ω=$(freq[1])" "Mode 2, ω=$(freq[2])" "Mode 3, ω=$(freq[3])" "Mode 4, ω=$(freq[4])" "Mode 5, ω=$(freq[5])"])
+    end
 	end
 end
 
@@ -887,11 +990,11 @@ if analysis=="dynamic"
 end
 
 # ╔═╡ 5c0cb724-fec9-11ea-17de-817c5a58be19
-if click
-	if analysis=="dynamic"
+if analysis=="dynamic"
+	if click
 		anim = @animate for T ∈ 1:Mtau
 			plotFEM(xh,w_interp[:,T],
-				"Free vibrations","FEM solution",[-1,1])
+				"Free vibrations-Cantilever End load","FEM solution",[-1,1])
 			plot!(annotations=(L/3,L/1.15,"T=$(T)"))
 		end
 		gif(anim)
@@ -900,66 +1003,79 @@ if click
 	end
 end
 
+# ╔═╡ 6f256f9a-0457-11eb-3efc-1737481634a7
+md"""### 5 Conclusions 
+We have analyzed the Finite Element framework for solving the tranverse deflections for a Euler Bernoulli beam model under various boundary conditions. Our resulting finite element approximations on different static examples presented here, helps reproduce the standard closed form solutions that have been derived in the literature. We note that for free undamped vibrations, a harmonic motion is observed. As a logical extension, the first few natural frequencies of the beam could be calculated from the generalized eigenvalued problem that arose from this case. Finally, Graphical User Interface was developed for the user to create and analyze their own custom examples. While there is no limitation in our FEM implementation on either the magnitude or direction of the loads, it must be noted that we made the assumption that the beam can have point loads only on the tips. Furthermore, the beam is considered to be prismatic with uniform bending stiffness and mass density. In the dynamic example, we restricted ourselves to undamped free vibrations. It is of course relevant, to analyze further and look at damped and forced vibrations. A good extension to study Euler Bernoulli beams further will be to explore the above mentioned areas. Our model provides a basis on which this can be done.
+""" 
+
 # ╔═╡ c94b321e-00d3-11eb-0c26-f1b5472f73cb
 md"""
 #### References
-1. http://www.learnaboutstructures.com/Determinate-Deflections-Introduction
+
+[^Tim40]: S. Timoshenko. *Strength of Materials*, 2nd edition, Chapter 5: Deflection of Transversely loaded beams, 1940.
+
+[^Kar16]: Micheal Karow, *Bending of Bernoulli beams and FEM*.
+
+[^Kar20]: Micheal Karow, *The Newmark Method*.
+
+[^Jog15]: C.S Jog, *Introduction to the Finite Element Method*, Lecture Notes, Indian Institute of Science, 2015. 
+
+[^Wik20]: Wikipedia contributors. (2020, August 28). Euler–Bernoulli beam theory. In Wikipedia, The Free Encyclopedia. Retrieved 14:10, October 1, 2020, from https://en.wikipedia.org/w/index.php?title=Euler%E2%80%93Bernoulli_beam_theory&oldid=975370990
+
 """
 
 # ╔═╡ Cell order:
 # ╟─219fcfc0-ef96-11ea-3baa-85eb1e81cf63
 # ╟─c7eb8ae0-fffe-11ea-3f09-318f505b326e
-# ╟─e125c7d6-ef97-11ea-39fd-b176103f48ba
 # ╟─6646b4f0-fdbe-11ea-38a6-9ff1504f8f5d
-# ╟─2ff6cc50-0002-11eb-1d90-e1f3bdada8fc
 # ╟─d8e7f8c0-00d4-11eb-3aad-d5b4512646fa
 # ╟─3840efd0-fffd-11ea-0445-4184c1500cf5
+# ╟─66e54c52-0002-11eb-27d1-45419b83cfa6
+# ╟─98d94f60-000f-11eb-1e15-6932b56cb721
+# ╟─6c98fffc-034d-11eb-1c1a-ffa28fdb44ca
+# ╟─0a59769e-03bf-11eb-12a2-b51bcedc5fa6
+# ╟─16101166-f4de-11ea-25f8-bdfa0e83d2a4
+# ╠═548dde12-f508-11ea-2ef8-fffbcd320ec8
+# ╟─c15ccb10-fdb7-11ea-2491-4557ac7265e5
+# ╟─2c02f7ba-f4ed-11ea-19c9-9bb69c5de35b
+# ╠═998838b6-f508-11ea-0949-8b40b202bab8
+# ╟─2b84ae9c-f66d-11ea-38e4-c1e6e9e7b7b8
+# ╠═8cbd99bc-f66d-11ea-3c74-2b9b9999741d
+# ╟─38c83eb6-030b-11eb-1f73-fff40cea1d21
+# ╟─43f4577a-03ba-11eb-10c2-878bee2418a0
+# ╟─466ce928-f03b-11ea-1b7e-a9e26cbccdcc
+# ╠═3f7a5a08-f03e-11ea-1fcf-83e5b5e57d28
+# ╟─098b7a0a-f2c1-11ea-31d6-91b4b485ac41
+# ╠═3f0f1d7a-fea2-11ea-1d7d-bffce1d81fec
+# ╟─d8fa3576-fea1-11ea-127e-01b24b313b6b
+# ╟─dbb675c8-f2b4-11ea-3ffa-81e83739270d
+# ╟─c78ce07a-f2bc-11ea-28bd-a1df0c486ed1
+# ╟─04fb4452-f2c1-11ea-393c-4b9b88d2aaf8
+# ╟─1f9d6fd0-002a-11eb-2fc2-87a8a7250e95
+# ╟─e125c7d6-ef97-11ea-39fd-b176103f48ba
+# ╠═9aea9122-f5d0-11ea-1bc7-d5b5f6368033
+# ╠═6c4aa6b8-f39b-11ea-0d7e-6bf87aaa95be
+# ╠═8352e10c-f4ce-11ea-25a9-d75c910445fa
+# ╟─0687b660-03d4-11eb-3d6c-dd21036c93eb
+# ╟─a94fb776-f66e-11ea-205e-21f70a68ef1d
+# ╟─682a04b0-002b-11eb-0c65-ff6186c4585b
+# ╟─c59aa2f0-0033-11eb-0b4f-d53534e78f1a
+# ╟─88668960-0035-11eb-25b3-c3aa828156fc
+# ╠═680184dc-f422-11ea-3aa4-e7d07918b79b
+# ╟─dce9f510-003c-11eb-24be-23294f7fac9f
+# ╠═986616bc-f5dd-11ea-3975-bb8d25062cce
+# ╟─e1d4afc0-00cd-11eb-2cd3-6fe14acc0080
+# ╠═b9cb119e-f5e8-11ea-302d-6db9fec26b2b
+# ╟─b59aacb2-f50d-11ea-34dd-67c479511398
+# ╠═28da6d86-f4f7-11ea-010d-f7838116054e
+# ╟─e2536ecc-f674-11ea-386d-274c40e5a846
+# ╟─3cdef684-042d-11eb-0d35-d340aa5003bc
+# ╟─74f78586-042d-11eb-3a10-dd31b9666f5c
+# ╟─11d73472-0312-11eb-2fc0-e9f17e78dd35
 # ╟─7171003c-f65f-11ea-0ed1-eb09bbaa9a32
 # ╟─65d5625e-f58b-11ea-1cb7-fb37ec26e2c3
 # ╟─4c1d7992-f668-11ea-01e2-6300503d267d
 # ╟─58ce39ee-fe93-11ea-3244-f5d7f3935485
-# ╟─f2b09b22-f03a-11ea-2baf-ff3e1721752d
-# ╟─66e54c52-0002-11eb-27d1-45419b83cfa6
-# ╟─00fbb85c-f508-11ea-21b0-1d20d4bdb05d
-# ╟─16101166-f4de-11ea-25f8-bdfa0e83d2a4
-# ╟─548dde12-f508-11ea-2ef8-fffbcd320ec8
-# ╟─c15ccb10-fdb7-11ea-2491-4557ac7265e5
-# ╟─2c02f7ba-f4ed-11ea-19c9-9bb69c5de35b
-# ╟─998838b6-f508-11ea-0949-8b40b202bab8
-# ╟─2b84ae9c-f66d-11ea-38e4-c1e6e9e7b7b8
-# ╟─8cbd99bc-f66d-11ea-3c74-2b9b9999741d
-# ╟─98d94f60-000f-11eb-1e15-6932b56cb721
-# ╟─466ce928-f03b-11ea-1b7e-a9e26cbccdcc
-# ╠═3f7a5a08-f03e-11ea-1fcf-83e5b5e57d28
-# ╟─098b7a0a-f2c1-11ea-31d6-91b4b485ac41
-# ╟─d8fa3576-fea1-11ea-127e-01b24b313b6b
-# ╟─dbb675c8-f2b4-11ea-3ffa-81e83739270d
-# ╠═3f0f1d7a-fea2-11ea-1d7d-bffce1d81fec
-# ╟─c78ce07a-f2bc-11ea-28bd-a1df0c486ed1
-# ╟─04fb4452-f2c1-11ea-393c-4b9b88d2aaf8
-# ╟─1f9d6fd0-002a-11eb-2fc2-87a8a7250e95
-# ╟─bc0f5540-002a-11eb-32d1-558ea518bc1e
-# ╟─682a04b0-002b-11eb-0c65-ff6186c4585b
-# ╟─9aea9122-f5d0-11ea-1bc7-d5b5f6368033
-# ╟─6c4aa6b8-f39b-11ea-0d7e-6bf87aaa95be
-# ╟─8352e10c-f4ce-11ea-25a9-d75c910445fa
-# ╟─9e66cea0-0030-11eb-26e9-4d81e95c1cbc
-# ╟─c59aa2f0-0033-11eb-0b4f-d53534e78f1a
-# ╟─88668960-0035-11eb-25b3-c3aa828156fc
-# ╟─f35502b0-003a-11eb-1d90-e91d7447f1f2
-# ╟─ed182740-0032-11eb-3715-d938b0f81ec2
-# ╟─957d80c0-003c-11eb-3846-850ad97d46c9
-# ╟─dce9f510-003c-11eb-24be-23294f7fac9f
-# ╟─e1d4afc0-00cd-11eb-2cd3-6fe14acc0080
-# ╟─a94fb776-f66e-11ea-205e-21f70a68ef1d
-# ╟─0c893646-f66f-11ea-1ca9-e32285b8c42b
-# ╟─680184dc-f422-11ea-3aa4-e7d07918b79b
-# ╟─84c0f1b8-f5d0-11ea-14e6-c987ddf8da67
-# ╟─986616bc-f5dd-11ea-3975-bb8d25062cce
-# ╟─b9cb119e-f5e8-11ea-302d-6db9fec26b2b
-# ╟─b59aacb2-f50d-11ea-34dd-67c479511398
-# ╟─28da6d86-f4f7-11ea-010d-f7838116054e
-# ╟─e2536ecc-f674-11ea-386d-274c40e5a846
 # ╟─1b080bca-fed5-11ea-169f-5930c4037901
 # ╟─b2b57896-f696-11ea-07b0-2f01a202fbd0
 # ╟─a32eccb4-f6ab-11ea-2b2c-1de81ae66813
@@ -973,4 +1089,5 @@ md"""
 # ╟─d2faeeb8-fdff-11ea-3fab-8d961cba8f25
 # ╟─0af93070-fda3-11ea-06a3-6b34638a8696
 # ╟─5c0cb724-fec9-11ea-17de-817c5a58be19
+# ╟─6f256f9a-0457-11eb-3efc-1737481634a7
 # ╟─c94b321e-00d3-11eb-0c26-f1b5472f73cb
