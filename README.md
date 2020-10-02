@@ -10,7 +10,16 @@ This is a numerical analysis project at TU Berlin with Prof. Michael Karow durin
 ### Dynamic Analysis
 ![Dynamic](./graphics/dynamic.gif)
 
+
+
 ## How to run
+Before starting the notebook, make sure of these external dependencies:
+- PlutoUI
+- SparseArrays
+- LinearAlgebra
+- Arpack
+- ForwardDiff
+- PyPlot
 
 To start, run the file `start_notebooks.jl` with Julia.
 
